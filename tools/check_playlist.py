@@ -12,8 +12,8 @@ Skrip ini hanya memeriksa APAKAH link menjawab. Ia tidak mengunduh video dan tid
 kunci DRM apa pun.
 
 Contoh:
-  python3 tools/check_playlist.py streams/playlist_super.m3u -o out/ --workers 30
-  python3 tools/check_playlist.py playlist_super.m3u --limit 20 --group "SPORTS"
+  python3 tools/check_playlist.py playlist_super.m3u -o out/ --workers 30
+  python3 tools/check_playlist.py streams/id.m3u --limit 20 --group "TV Nasional"
 """
 from __future__ import annotations
 

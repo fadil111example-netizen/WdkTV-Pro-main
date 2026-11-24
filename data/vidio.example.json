@@ -1,0 +1,17 @@
+[
+  {
+    "_catatan": "CONTOH -- salin pola di bawah ke data/rcti_channels.json bila ingin mencoba sumber vidio. Sumber vidio bersifat OPSIONAL dan percobaan: tautan finalnya butuh tanda tangan JavaScript & akun langganan untuk channel premium (SCTV/Indosiar), sehingga bot TIDAK akan menghapus channel bila tautan tak didapat.",
+    "name": "SCTV (vidio)",
+    "source": "vidio",
+    "vidio_id": 204,
+    "group": "TV Nasional",
+    "logo": "https://thumbor.prod.vidiocdn.com/rQ1p1C-6D8sBqf4rx4t6J4G3S0Q=/filters:quality(70)/vidio-web-prod-livestreaming/uploads/livestreaming/image/204/sctv-84b8e6.jpg"
+  },
+  {
+    "name": "Indosiar (vidio)",
+    "source": "vidio",
+    "vidio_id": 205,
+    "group": "TV Nasional",
+    "logo": "https://thumbor.prod.vidiocdn.com/e-tiJFPZKI4QjhxAHzp_5foCkGE=/filters:quality(70)/vidio-web-prod-livestreaming/uploads/livestreaming/image/205/indosiar-d9a3d0.jpg"
+  }
+]

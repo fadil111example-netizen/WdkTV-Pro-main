@@ -11,7 +11,7 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,14 +20,21 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Uji semua playlist
+        # File yang benar-benar ada di repo: playlist_super.m3u (root) & streams/id.m3u.
+        # check_playlist.py mengembalikan 0 walau ada link mati; ia hanya mengembalikan 2
+        # bila playlist kosong / tidak ada channel untuk diuji.
         run: |
-          python tools/check_playlist.py streams/playlist_super.m3u -o out/super --workers 30
-          python tools/check_playlist.py playlist_super.m3u        -o out/root  --workers 30
+          python tools/check_playlist.py playlist_super.m3u -o out/root --workers 30
+          python tools/check_playlist.py streams/id.m3u    -o out/id   --workers 10
       - name: Ringkasan di halaman run
+        if: always()
         run: |
-          cat out/super/report.md >> "$GITHUB_STEP_SUMMARY"
-          cat out/root/report.md  >> "$GITHUB_STEP_SUMMARY"
+          for f in out/root/report.md out/id/report.md; do
+            if [ -f "$f" ]; then cat "$f" >> "$GITHUB_STEP_SUMMARY"; fi
+          done
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: hasil-cek-playlist
           path: out/
+          if-no-files-found: ignore

@@ -1,9 +1,11 @@
 name: Auto Update Token RCTI
 
 on:
-  # Jadwal otomatis DIMATIKAN: server RCTI+ tidak lagi memberi token ke bot (lihat README).
-  # schedule:
-  #   - cron: '*/5 * * * *'
+  # Jadwal otomatis: token siaran RCTI+ berlaku sekitar 3 jam, jadi cukup tiap 2 jam.
+  # (Bot menyegarkan lebih cepat bila FORCE_REFRESH=1. Bila tautan masih segar, bot
+  #  berhenti tanpa menyentuh file sehingga tidak ada commit sampah.)
+  schedule:
+    - cron: '0 */2 * * *'
   workflow_dispatch:
     inputs:
       force:
@@ -22,7 +24,7 @@ concurrency:
 jobs:
   update-m3u:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -36,8 +38,10 @@ jobs:
 
       - name: Jalankan bot
         env:
-          RCTI_APIKEY: ${{ secrets.RCTI_APIKEY }}   # isi di Settings > Secrets and variables > Actions
-          FORCE_REFRESH: ${{ github.event.inputs.force }}
+          # RCTI_APIKEY kini OPSIONAL. Kosongkan / tidak perlu secret agar workflow tetap jalan.
+          RCTI_APIKEY: ${{ secrets.RCTI_APIKEY }}
+          # github.event.inputs.force kosong saat dijalankan lewat jadwal/push -> jadikan '0'.
+          FORCE_REFRESH: ${{ github.event.inputs.force || '0' }}
         run: python update_rcti.py
 
       - name: Commit hanya bila file berubah
