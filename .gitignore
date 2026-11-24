@@ -1,0 +1,9 @@
+out/
+build/
+*.tmp
+__pycache__/
+android/.gradle/
+android/**/build/
+android/local.properties
+*.keystore
+.env

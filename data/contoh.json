@@ -1,0 +1,4 @@
+[
+  {"name": "Contoh Channel A", "url": "https://example.com/a/index.m3u8", "group": "Contoh", "logo": "https://example.com/a.png", "referrer": "https://example.com/"},
+  {"name": "Contoh Channel B", "url": "https://example.com/b/manifest.mpd", "group": "Contoh"}
+]

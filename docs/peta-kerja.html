@@ -1,0 +1,156 @@
+<title>Peta Kerja WdkTV</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+  /* Tata letak: kolom kiri = urutan langkah (bisa diklik), kolom kanan = penjelasan langkah; di bawah simulasi umur link. */
+  :root {
+    --bg: #f4f5f3; --surface: #ffffff; --ink: #16201e; --muted: #5a6764; --line: #d9dedb;
+    --accent: #0f766e; --accent-soft: #d8efec; --warn: #b45309; --warn-soft: #fbe9d3;
+    --code-bg: #eef1ef;
+    --f-head: "Space Grotesk", system-ui, sans-serif; --f-body: "Inter", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101514; --surface: #182120; --ink: #e6efec; --muted: #9bb0ab; --line: #2a3835;
+      --accent: #5eead4; --accent-soft: #17403b; --warn: #fbbf6a; --warn-soft: #43321a; --code-bg: #0d1211;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101514; --surface: #182120; --ink: #e6efec; --muted: #9bb0ab; --line: #2a3835;
+    --accent: #5eead4; --accent-soft: #17403b; --warn: #fbbf6a; --warn-soft: #43321a; --code-bg: #0d1211;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.6;
+         padding-block: 28px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px));
+         padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  main { max-width: 1020px; margin: 0 auto; display: grid; gap: 28px; }
+  h1, h2, h3 { font-family: var(--f-head); line-height: 1.2; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(1.7rem, 4.5vw, 2.4rem); }
+  h2 { font-size: 1.25rem; }
+  .lead { color: var(--muted); max-width: 62ch; margin: 10px 0 0; }
+  .grid { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .steps button { width: 100%; text-align: left; font: inherit; color: inherit; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; cursor: pointer;
+    display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: center; }
+  .steps button:hover { border-color: var(--accent); }
+  .steps button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .steps button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .n { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 .85rem var(--f-head);
+       background: var(--code-bg); color: var(--accent); }
+  .steps small { display: block; color: var(--muted); font-size: .8rem; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; min-width: 0; }
+  .panel p { margin: .6em 0; }
+  .tag { display: inline-block; font: 600 .72rem var(--f-body); letter-spacing: .06em; text-transform: uppercase;
+         color: var(--accent); margin-bottom: 6px; }
+  pre { background: var(--code-bg); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-size: .82rem; line-height: 1.5; margin: 12px 0 0; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; font-size: .9rem; margin-top: 12px; }
+  .sim { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; min-width: 0; }
+  .ctl { display: flex; flex-wrap: wrap; gap: 16px 28px; margin: 14px 0; }
+  .ctl label { display: grid; gap: 4px; font-size: .9rem; min-width: 200px; }
+  .ctl output { font-weight: 600; color: var(--accent); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .cmp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 520px) { .cmp { grid-template-columns: minmax(0, 1fr); } }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .big { font: 700 2rem var(--f-head); font-variant-numeric: tabular-nums; }
+  .bar { height: 34px; display: flex; gap: 1px; margin-top: 8px; overflow: hidden; border-radius: 4px; background: var(--code-bg); }
+  .bar i { flex: 1 1 0; min-width: 0; background: var(--line); }
+  .bar i.on { background: var(--accent); }
+  .cap { color: var(--muted); font-size: .85rem; margin: 10px 0 0; }
+  @media (prefers-reduced-motion: no-preference) { .steps button { transition: border-color .15s, background .15s; } }
+</style>
+
+<main>
+  <header>
+    <h1>Peta kerja WdkTV</h1>
+    <p class="lead">Cara bot menjaga link RCTI, MNCTV, GTV, dan iNews tetap hidup. Klik tiap langkah untuk melihat apa yang terjadi dan kenapa.</p>
+  </header>
+
+  <section class="grid" aria-label="Alur kerja">
+    <ol class="steps" id="steps"></ol>
+    <article class="panel" id="panel" aria-live="polite"></article>
+  </section>
+
+  <section class="sim" aria-labelledby="sim-h">
+    <h2 id="sim-h">Berapa kali file berubah dalam satu hari?</h2>
+    <p class="lead">Versi lama menulis ulang file tiap 2 menit. Versi baru hanya menulis bila link tinggal sedikit umurnya. Umur link asli tidak diketahui, jadi geser sendiri untuk melihat pengaruhnya.</p>
+    <div class="ctl">
+      <label for="life">Umur satu link <output id="lifeO">60 menit</output>
+        <input id="life" type="range" min="20" max="240" step="5" value="60"></label>
+      <label for="thr">Segarkan bila sisa kurang dari <output id="thrO">15 menit</output>
+        <input id="thr" type="range" min="5" max="30" step="5" value="15"></label>
+    </div>
+    <div class="cmp">
+      <div class="box"><div class="tag">Versi lama · tiap 2 menit</div><div class="big" id="oldN">720</div><div>commit per hari</div></div>
+      <div class="box"><div class="tag">Versi baru · cek tiap 5 menit</div><div class="big" id="newN">0</div><div>commit per hari</div></div>
+    </div>
+    <p class="cap" id="barCap">Tiap batang = satu jam. Batang terang = ada commit pada jam itu.</p>
+    <div class="bar" id="bar" role="img" aria-label="Jam dengan commit pada versi baru"></div>
+  </section>
+</main>
+
+<script>
+  const STEPS = [
+    { t: "Jam GitHub berdering", s: "Tiap 5 menit", tag: "Pemicu",
+      body: "<p>File <code>auto-update-m3u.yml</code> memakai jadwal cron. GitHub menyiapkan komputer sementara, mengambil kode repo, lalu menjalankan bot. Tidak ada yang perlu kamu klik.</p><p>GitHub tidak menjamin ketepatan jadwal, jadi jarak sebenarnya bisa lebih lama dari 5 menit.</p>",
+      code: "on:\n  schedule:\n    - cron: '*/5 * * * *'" },
+    { t: "Bot cek umur link", s: "Pintar: sering berhenti di sini", tag: "Keputusan",
+      body: "<p>Bot membaca <code>streams/id.m3u</code>. Di tiap link ada <code>auth_key=&lt;waktu&gt;-...</code>. Angka pertama adalah waktu kedaluwarsa. Bila semua channel masih punya sisa umur cukup, bot berhenti tanpa mengubah apa pun.</p>",
+      code: "auth_key=1795437515-2bf72adc...\n         └─ waktu kedaluwarsa (epoch)" ,
+      note: "Inilah beda terbesar dari versi lama: tidak ada commit bila belum perlu." },
+    { t: "Minta kartu tamu", s: "visitor_token", tag: "Izin",
+      body: "<p>Bot membuka <code>m.rctiplus.com</code> seperti browser HP. Server memberi cookie <code>visitor_token</code>, semacam kartu tamu sementara.</p>",
+      code: "GET https://m.rctiplus.com/\n→ Set-Cookie: visitor_token=eyJ0eX..." },
+    { t: "Tanya API: link terbaru?", s: "Satu panggilan per channel", tag: "Pengambilan",
+      body: "<p>Bot memanggil API internal yang dipakai website RCTI+ sendiri, membawa <code>apikey</code> dan kartu tamu tadi. Jawabannya berupa JSON yang berisi link <code>.m3u8</code> dengan <code>auth_key</code> baru.</p><p>Ini panggilan ke API tak resmi, bukan membaca halaman HTML.</p>",
+      code: "GET .../live/1/url   (RCTI)\nGET .../live/2/url   (MNCTV)\nGET .../live/3/url   (GTV)\nGET .../live/4/url   (iNews)",
+      note: "apikey kini dibaca dari GitHub Secret <b>RCTI_APIKEY</b>, tidak ditulis di kode. Bila RCTI mengganti apikey atau alamat API, bot gagal dan kode harus diperbarui." },
+    { t: "Tulis file playlist", s: "streams/id.m3u", tag: "Hasil",
+      body: "<p>Link baru ditulis ke <code>id.m3u</code> bersama header <code>Referer</code> dan <code>User-Agent</code> yang diminta server. Bila satu channel gagal, link lamanya dipertahankan. Bila semuanya gagal, file tidak disentuh.</p>",
+      code: "#EXTINF:-1 tvg-id=\"RCTI\" ... , RCTI\n#EXTVLCOPT:http-referrer=https://m.rctiplus.com/\nhttps://linier-rcti...m3u8?auth_key=BARU" },
+    { t: "Commit bila berubah", s: "git push", tag: "Penyimpanan",
+      body: "<p>Bot menyimpan file ke repo hanya jika isinya benar-benar berbeda. Setelah itu link “raw” GitHub sudah berisi link terbaru. GitHub menyimpan cache beberapa menit, jadi hasilnya bisa terlambat sedikit.</p>",
+      code: "git diff --cached --quiet || git commit && git push" },
+    { t: "Pemutar memuat ulang", s: "VLC / OTT Navigator / app Android", tag: "Penonton",
+      body: "<p>Pemutar IPTV membuka URL raw playlist. Agar tidak memakai link yang sudah basi, pemutar harus memuat ulang playlist secara berkala. Aplikasi pemutar di folder <code>android/</code> memuat ulang tiap kali dibuka.</p>",
+      code: "https://raw.githubusercontent.com/<user>/<repo>/main/streams/id.m3u" }
+  ];
+  const stepsEl = document.getElementById("steps"), panel = document.getElementById("panel");
+  function show(i) {
+    const s = STEPS[i];
+    panel.innerHTML = '<span class="tag">' + (i + 1) + " · " + s.tag + "</span><h3>" + s.t + "</h3>" + s.body +
+      (s.code ? "<pre><code>" + s.code.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</code></pre>" : "") +
+      (s.note ? '<div class="note">' + s.note + "</div>" : "");
+    [...stepsEl.querySelectorAll("button")].forEach((b, j) => b.setAttribute("aria-pressed", j === i));
+  }
+  STEPS.forEach((s, i) => {
+    const li = document.createElement("li"), b = document.createElement("button");
+    b.type = "button"; b.setAttribute("aria-pressed", "false");
+    b.innerHTML = '<span class="n">' + (i + 1) + "</span><span>" + s.t + "<small>" + s.s + "</small></span>";
+    b.addEventListener("click", () => show(i));
+    li.appendChild(b); stepsEl.appendChild(li);
+  });
+  show(0);
+
+  // Simulasi: 24 jam, bot jalan tiap 5 menit; commit saat sisa umur link < ambang.
+  const $ = id => document.getElementById(id);
+  function sim() {
+    const life = +$("life").value, thr = +$("thr").value;
+    $("lifeO").textContent = life + " menit"; $("thrO").textContent = thr + " menit";
+    let expiry = 0, commits = 0; const perHour = new Array(24).fill(0);
+    for (let t = 0; t < 24 * 60; t += 5) {
+      if (expiry - t < thr) { expiry = t + life; commits++; perHour[Math.floor(t / 60)]++; }
+    }
+    $("newN").textContent = commits;
+    $("oldN").textContent = 720;
+    const bar = $("bar"); bar.innerHTML = "";
+    perHour.forEach(n => { const i = document.createElement("i"); if (n) i.className = "on"; i.title = n + " commit"; bar.appendChild(i); });
+  }
+  $("life").addEventListener("input", sim); $("thr").addEventListener("input", sim); sim();
+</script>

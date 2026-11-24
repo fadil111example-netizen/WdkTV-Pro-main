@@ -1,0 +1,54 @@
+name: Auto Update Token RCTI
+
+on:
+  # Jadwal otomatis DIMATIKAN: server RCTI+ tidak lagi memberi token ke bot (lihat README).
+  # schedule:
+  #   - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Paksa segarkan walau link masih berlaku (1 = ya)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: write
+
+# Hindari dua run berjalan bersamaan yang saling tabrak saat push
+concurrency:
+  group: update-rcti
+  cancel-in-progress: false
+
+jobs:
+  update-m3u:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          cache: pip
+
+      - name: Install dependensi
+        run: pip install -r requirements.txt
+
+      - name: Jalankan bot
+        env:
+          RCTI_APIKEY: ${{ secrets.RCTI_APIKEY }}   # isi di Settings > Secrets and variables > Actions
+          FORCE_REFRESH: ${{ github.event.inputs.force }}
+        run: python update_rcti.py
+
+      - name: Commit hanya bila file berubah
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add streams/id.m3u
+          if git diff --cached --quiet; then
+            echo "Tidak ada perubahan."
+          else
+            git commit -m "chore: refresh token RCTI [skip ci]"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push
+          fi
