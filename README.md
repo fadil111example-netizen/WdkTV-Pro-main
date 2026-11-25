@@ -12,11 +12,11 @@ WdkTV-Pro/
 │   ├── check_playlist.py     uji hidup/mati ratusan link, hasilkan alive.m3u + laporan
 │   ├── gen_m3u.py            gabung JSON/CSV/M3U -> satu M3U (dedupe, urut, EPG)
 │   └── vidio.py              (opsional) metadata/tautan siaran vidio.com
-├── tests/test_tools.py       13 tes otomatis, tanpa internet
+├── tests/test_tools.py       16 tes otomatis, tanpa internet
 ├── android/                  aplikasi pemutar M3U (Kotlin + Media3/ExoPlayer)
 ├── docs/peta-kerja.html      diagram interaktif cara kerja
 ├── tv-bro.html               alat web lama: JSON -> M3U
-└── .github/workflows/        auto-update (2 jam), cek mingguan, tes, build APK
+└── .github/workflows/        auto-update (tiap 5 mnt + saat push), cek per jam, tes, build APK
 ```
 
 ## Jalankan di Debian proot (Termux)
@@ -68,8 +68,21 @@ Sifat penting:
 - Bot "pintar": bila semua tautan yang dikelola masih berlaku > `MIN_REMAINING_SEC`,
   bot berhenti tanpa menyentuh jaringan/file (tidak ada commit sampah).
 
-Variabel lingkungan: `MIN_REMAINING_SEC` (default 900), `FORCE_REFRESH` (`1` = paksa),
+Variabel lingkungan: `MIN_REMAINING_SEC` (default 1800), `FORCE_REFRESH` (`1` = paksa),
 `OUTPUT_FILE`, `RCTI_APIKEY` (opsional), `RCTI_PLATFORM`, `APPIER_ID_BASE`.
+
+### Channel manual tidak akan hilang (channel safety)
+
+Channel manual yang Anda tambah sendiri (SCTV, Indosiar, Trans TV, Trans 7, ANTV, dst.)
+**tidak pernah** dihapus atau diubah saat RCTI/MNCTV/GTV/iNews disegarkan. Ada 3 lapis
+pengaman:
+
+1. `merge_playlist()` menyalin setiap entri lama apa adanya dan hanya mengganti channel
+   yang terdaftar di `data/rcti_channels.json`.
+2. Bila sebuah channel gagal disegarkan, tautan lamanya tetap dipakai.
+3. **Verifikasi akhir**: sebelum menulis file, bot memastikan tidak ada satu pun nama
+   channel lama yang hilang; jika ada, penulisan dibatalkan (`exit 1`) dan file lama
+   dibiarkan utuh. Jadi mustahil channel manual terhapus.
 
 ### Channel vidio.com (opsional)
 
@@ -87,10 +100,37 @@ didapat, tautan lama tetap dipakai dan channel tidak dihapus.
 ## Pasang di GitHub
 1. Upload isi folder ini ke repo.
 2. Settings > Actions > General > Workflow permissions: **Read and write**.
-3. Tab Actions > "Auto Update Token RCTI" > Run workflow (isi `force` = 1 untuk paksa).
-   Hijau = berhasil. Jadwal otomatis tiap 2 jam sudah aktif.
+3. Selesai — **tidak perlu klik apa pun**. Bot token RCTI berjalan otomatis:
+   - tiap 5 menit (jadwal),
+   - setiap kali Anda push perubahan `streams/id.m3u` atau `data/rcti_channels.json`,
+   - dan saat Anda menekan "Run workflow" (kolom `force` sudah berisi `0`; tidak wajib diubah).
 4. `RCTI_APIKEY` **tidak lagi wajib**. Bila ingin memakainya, tambahkan sebagai
    repository secret `RCTI_APIKEY`: Settings > Secrets and variables > Actions.
+
+> Catatan: GitHub Actions hanya berjalan pada repo publik (gratis). Untuk repo privat,
+> Actions tetap berjalan tetapi memakai kuota menit akun Anda.
+
+### Batas & kuota GitHub (penting)
+- **Mendekati "2 menit"**: GitHub hanya menjalankan jadwal `cron` paling cepat **tiap
+  5 menit** (batas platform — 2 menit tidak mungkin). Jadi workflow ini memakai
+  `*/5 * * * *`. Karena bot hanya benar-benar menyegarkan ketika token hampir habis,
+  sebagian besar run selesai cepat dan tidak membuat commit.
+- **Repo publik**: gratis, 5 menit aman.
+- **Repo privat**: tiap run tetap memakai kuota menit. Bila kuota menipis, ubah jadwal
+  di `auto-update-m3u.yml` menjadi lebih jarang (mis. `0 * * * *` tiap jam). Tautan
+  tetap tidak akan mati karena bot menyegarkan jauh sebelum kedaluwarsa
+  (`MIN_REMAINING_SEC` = 30 menit), asalkan dijalankan minimal tiap ~2 jam.
+- Jadwal `schedule` tidak ikut jalan bila repo sudah tidak aktif 60 hari (aturan
+  GitHub); aktifkan lagi dari tab Actions bila perlu.
+
+### Update di aplikasi TV (TiviMate / TVMate)
+TiviMate **tidak** menarik ulang otomatis di latar belakang; ia memuat ulang saat
+playlist di-refresh. Agar tautan tidak pernah mati:
+- Bot menyegarkan token jauh sebelum kedaluwarsa (`MIN_REMAINING_SEC` = 30 menit),
+  jadi link selalu segar saat Anda membuka aplikasi.
+- Di TiviMate aktifkan kunci playlist otomatis/pull-to-refresh, atau buka
+  Settings > Playlists > pilih playlist > **Update**. Setelah itu channel RCTI dkk.
+  memakai tautan terbaru dari URL raw GitHub.
 
 ## Aplikasi Android
 Build lewat GitHub: Actions > "Build APK Android (debug)" > Run workflow, lalu unduh artifact `WdkTVPlayer-debug`.

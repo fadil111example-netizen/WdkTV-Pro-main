@@ -103,6 +103,22 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(e.request_headers()["User-Agent"], "ua")
         self.assertEqual(e.kind, "hls")
 
+    def test_preserves_manual_options(self):
+        """Blok channel manual gaya Vidio (banyak #EXTVLCOPT/#KODIPROP) harus utuh."""
+        block = ('#EXTINF:-1 tvg-logo="x" group-title="TV Nasional", SCTV HD\n'
+                 '#EXTVLCOPT:http-user-agent=VidioPlayer/6.31.6\n'
+                 '#EXTVLCOPT:http-referrer=http://www.vidio.com/\n'
+                 '#EXTVLCOPT:http-origin=http://www.vidio.com\n'
+                 '#KODIPROP:inputstreamaddon=inputstream.adaptive\n'
+                 '#KODIPROP:inputstream.adaptive.license_type=com.widevine.alpha\n'
+                 'https://nextgenz.my.id/event/pidio/play.mpd?id=204&type=dash\n')
+        pl = m3ulib.parse('#EXTM3U\n' + block)
+        e = pl.entries[0]
+        self.assertEqual(e.name, "SCTV HD")
+        self.assertEqual(e.kind, "dash")
+        self.assertEqual(len(e.options), 5)
+        self.assertEqual(m3ulib.dumps(pl), '#EXTM3U\n' + block)   # byte-identik
+
 
 class CheckTests(ServerCase):
     def test_statuses(self):
@@ -238,6 +254,49 @@ class BotTests(unittest.TestCase):
         self.assertEqual([e.name for e in result], ["SCTV", "RCTI", "iNews"])
         self.assertIn("new/r.m3u8", result[1].url)
         self.assertIn("new/i.m3u8", result[2].url)
+
+    def test_merge_preserves_exact_manual_blocks(self):
+        """Reproduksi keluaran user: RCTI/MNCTV/iNews dikelola, GTV di akhir, manual di tengah."""
+        channels = [{"api_id": 1, "name": "RCTI", "logo": ""},
+                    {"api_id": 2, "name": "MNCTV", "logo": ""},
+                    {"api_id": 3, "name": "GTV", "logo": ""},
+                    {"api_id": 4, "name": "iNews", "logo": ""}]
+        text = (
+            '#EXTM3U\n'
+            '#EXTINF:-1 tvg-id="RCTI", RCTI\nhttps://linier-rcti/x.m3u8?auth_key=1-a-0-b\n'
+            '#EXTINF:-1 tvg-id="MNCTV", MNCTV\nhttps://linier-mnctv/x.m3u8?auth_key=1-a-0-b\n'
+            '#EXTINF:-1 tvg-id="iNews", iNews\nhttps://linier-inews/x.m3u8?auth_key=1-a-0-b\n'
+            '#EXTINF:-1 group-title="TV Nasional", SCTV HD\n'
+            '#EXTVLCOPT:http-user-agent=VidioPlayer/6.31.6\n'
+            '#KODIPROP:inputstream.adaptive.license_type=com.widevine.alpha\n'
+            'https://nextgenz.my.id/event/pidio/play.mpd?id=204&type=dash\n'
+            '#EXTINF:-1 group-title="TV Nasional", Trans TV\n'
+            'https://live.cnbcindonesia.com/transtv/smil:transtv.smil/playlist.m3u8\n'
+            '#EXTINF:-1 tvg-id="GTV", GTV\nhttps://linier-gtv/x.m3u8?auth_key=1-a-0-b\n')
+        old = m3ulib.parse(text).entries
+        fresh = {k: v + "?new" for k, v in
+                 {"rcti": "https://linier-rcti/x.m3u8", "mnctv": "https://linier-mnctv/x.m3u8",
+                  "gtv": "https://linier-gtv/x.m3u8", "inews": "https://linier-inews/x.m3u8"}.items()}
+        result = update_rcti.merge_playlist(channels, old, fresh)
+        self.assertEqual([e.name for e in result],
+                         ["RCTI", "MNCTV", "iNews", "SCTV HD", "Trans TV", "GTV"])
+        by = {e.name: e for e in result}
+        # entri manual persis sama (opsi & URL) seperti aslinya:
+        src = {e.name: e for e in old}
+        for n in ("SCTV HD", "Trans TV"):
+            self.assertEqual(by[n].url, src[n].url)
+            self.assertEqual(by[n].options, src[n].options)
+        # yang dikelola memakai tautan baru:
+        for n in ("RCTI", "MNCTV", "GTV", "iNews"):
+            self.assertTrue(by[n].url.endswith("?new"), n)
+
+    def test_lost_names_guard(self):
+        """Pengaman terakhir: kalau ada channel lama akan hilang, harus terdeteksi."""
+        old = [m3ulib.Entry(name="RCTI", url="a"), m3ulib.Entry(name="SCTV HD", url="b")]
+        ok = [m3ulib.Entry(name="RCTI", url="a2"), m3ulib.Entry(name="SCTV HD", url="b")]
+        self.assertEqual(update_rcti.lost_names(old, ok), [])
+        bad = [m3ulib.Entry(name="RCTI", url="a2")]
+        self.assertEqual(update_rcti.lost_names(old, bad), ["SCTV HD"])
 
     def test_needs_refresh_rules(self):
         channels = [{"api_id": 1, "name": "RCTI", "logo": ""}]

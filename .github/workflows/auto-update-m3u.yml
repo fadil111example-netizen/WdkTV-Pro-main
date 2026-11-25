@@ -1,22 +1,32 @@
 name: Auto Update Token RCTI
 
 on:
-  # Jadwal otomatis: token siaran RCTI+ berlaku sekitar 3 jam, jadi cukup tiap 2 jam.
-  # (Bot menyegarkan lebih cepat bila FORCE_REFRESH=1. Bila tautan masih segar, bot
-  #  berhenti tanpa menyentuh file sehingga tidak ada commit sampah.)
+  # 1) JADWAL OTOMATIS -- berjalan sendiri, TANPA perlu klik apa pun.
+  #    GitHub mengeksekusi cron paling cepat tiap 5 menit (batas platform; 2 menit
+  #    tidak mungkin). Bot hanya menyegarkan bila token hampir kedaluwarsa, jadi
+  #    sebagian besar run berhenti cepat tanpa commit.
   schedule:
-    - cron: '0 */2 * * *'
+    - cron: '*/5 * * * *'
+  # 2) IKUT JALAN saat Anda push/commit perubahan pada playlist atau daftar channel.
+  #    Jadi begitu Anda menambah SCTV/Indosiar/TransTV/dll, bot langsung jalan
+  #    DI ATAS file terbaru Anda dan channel manual tetap aman.
+  push:
+    paths:
+      - 'streams/id.m3u'
+      - 'data/rcti_channels.json'
+  # 3) Tombol manual -- cukup klik "Run workflow" (kolom 'force' sudah terisi 0,
+  #    tidak wajib diubah).
   workflow_dispatch:
     inputs:
       force:
-        description: 'Paksa segarkan walau link masih berlaku (1 = ya)'
+        description: 'Segarkan paksa walau link masih berlaku? (0 = tidak, 1 = ya)'
         required: false
         default: '0'
 
 permissions:
   contents: write
 
-# Hindari dua run berjalan bersamaan yang saling tabrak saat push
+# Hindari dua run berjalan bersamaan yang saling tabrak saat push.
 concurrency:
   group: update-rcti
   cancel-in-progress: false
@@ -27,6 +37,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -38,21 +50,75 @@ jobs:
 
       - name: Jalankan bot
         env:
-          # RCTI_APIKEY kini OPSIONAL. Kosongkan / tidak perlu secret agar workflow tetap jalan.
+          # RCTI_APIKEY OPSIONAL. Tidak perlu secret apa pun agar workflow jalan.
           RCTI_APIKEY: ${{ secrets.RCTI_APIKEY }}
-          # github.event.inputs.force kosong saat dijalankan lewat jadwal/push -> jadikan '0'.
           FORCE_REFRESH: ${{ github.event.inputs.force || '0' }}
         run: python update_rcti.py
 
-      - name: Commit hanya bila file berubah
+      - name: Verifikasi tidak ada channel yang hilang
+        # Pagar tambahan di tingkat CI: jumlah channel SEBELUM vs SESUDAH bot harus
+        # sama atau bertambah. Kalau berkurang, workflow GAGAL dan tidak ada yang
+        # di-commit -> channel manual (SCTV/Indosiar/dll.) mustahil hilang.
         run: |
+          set -eu
+          BEFORE=$(git show HEAD:streams/id.m3u 2>/dev/null | grep -c '^#EXTINF' || true)
+          AFTER=$(grep -c '^#EXTINF' streams/id.m3u || true)
+          BEFORE=${BEFORE:-0}
+          AFTER=${AFTER:-0}
+          echo "Channel sebelum: $BEFORE | sesudah: $AFTER"
+          if [ "$AFTER" -lt "$BEFORE" ]; then
+            echo "::error::Jumlah channel berkurang ($BEFORE -> $AFTER). Commit dibatalkan demi keamanan."
+            git checkout -- streams/id.m3u
+            exit 1
+          fi
+
+      - name: Simpan perubahan (aman dari bentrok)
+        env:
+          # bila perlu menyegarkan ulang di tengah proses ini, paksa saja:
+          RCTI_APIKEY: ${{ secrets.RCTI_APIKEY }}
+        run: |
+          set -u
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH="${GITHUB_REF_NAME}"
+
           git add streams/id.m3u
           if git diff --cached --quiet; then
-            echo "Tidak ada perubahan."
-          else
-            git commit -m "chore: refresh token RCTI [skip ci]"
-            git pull --rebase origin "${GITHUB_REF_NAME}"
-            git push
+            echo "Tidak ada perubahan untuk disimpan."
+            exit 0
           fi
+          git commit -m "chore: refresh token RCTI [skip ci]"
+
+          # Satukan dengan perubahan terbaru di remote (mis. channel manual yang
+          # baru Anda tambah). Bila bentrok, ambil isi remote lalu segarkan ulang
+          # DI ATAS isi itu -> channel manual tidak akan pernah hilang.
+          git fetch origin "$BRANCH"
+          if ! git rebase "origin/$BRANCH"; then
+            git rebase --abort || true
+            echo "Perubahan lebih baru terdeteksi di remote; menyegarkan ulang di atas isi terbaru."
+            git reset --hard "origin/$BRANCH"
+            FORCE_REFRESH=1 python update_rcti.py
+            git add streams/id.m3u
+            git diff --cached --quiet || git commit -m "chore: refresh token RCTI [skip ci]"
+          fi
+
+          # Push dengan percobaan ulang: bila ada workflow lain menulis bersamaan,
+          # ambil ulang lalu ulangi (tanpa pernah membuang channel manual Anda).
+          for i in 1 2 3 4 5; do
+            if git push origin "HEAD:$BRANCH"; then
+              echo "Berhasil di-push (percobaan $i)."
+              exit 0
+            fi
+            echo "Push gagal (percobaan $i); menyelaraskan ulang..."
+            sleep $((i * 5))
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              git reset --hard "origin/$BRANCH"
+              FORCE_REFRESH=1 python update_rcti.py
+              git add streams/id.m3u
+              git diff --cached --quiet || git commit -m "chore: refresh token RCTI [skip ci]"
+            fi
+          done
+          echo "Gagal push setelah beberapa percobaan." >&2
+          exit 1

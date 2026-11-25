@@ -1,10 +1,18 @@
 name: Tes Otomatis
 
 on:
+  # Otomatis ikut jalan setiap Anda mengubah kode/tools/tes...
   push:
-    paths: ['tools/**', 'update_rcti.py', 'tests/**']
+    paths: ['tools/**', 'update_rcti.py', 'tests/**', 'data/**', 'streams/**']
   pull_request:
+  # ...dan diperiksa ulang otomatis tiap hari agar selalu sehat.
+  schedule:
+    - cron: '0 6 * * *'
   workflow_dispatch:
+
+concurrency:
+  group: run-tests
+  cancel-in-progress: false
 
 jobs:
   test:
@@ -14,5 +22,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+          cache: pip
       - run: pip install -r requirements.txt
       - run: python -m unittest discover -s tests -v

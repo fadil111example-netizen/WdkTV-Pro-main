@@ -1,12 +1,17 @@
-name: Cek Playlist (mingguan)
+name: Cek Playlist (per jam)
 
 on:
+  # Otomatis tiap jam. Tidak perlu klik apa pun.
   schedule:
-    - cron: '0 3 * * 1'        # Senin 03:00 UTC
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: check-playlists
+  cancel-in-progress: false
 
 jobs:
   check:
@@ -21,7 +26,7 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Uji semua playlist
         # File yang benar-benar ada di repo: playlist_super.m3u (root) & streams/id.m3u.
-        # check_playlist.py mengembalikan 0 walau ada link mati; ia hanya mengembalikan 2
+        # check_playlist.py mengembalikan 0 walau ada link mati; hanya mengembalikan 2
         # bila playlist kosong / tidak ada channel untuk diuji.
         run: |
           python tools/check_playlist.py playlist_super.m3u -o out/root --workers 30

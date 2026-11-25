@@ -31,7 +31,7 @@ Sifat penting
 
 Variabel lingkungan
 -------------------
-  MIN_REMAINING_SEC  (opsi)  ambang sisa umur, detik. default 900
+  MIN_REMAINING_SEC  (opsi)  ambang sisa umur, detik. default 1800 (30 menit)
   FORCE_REFRESH      (opsi)  '1' = segarkan walau masih berlaku
   OUTPUT_FILE        (opsi)  file playlist. default streams/id.m3u
   RCTI_APIKEY        (opsi)  tidak wajib; dikirim sebagai header 'apikey' bila diisi
@@ -63,7 +63,7 @@ import m3ulib  # noqa: E402
 
 OUTPUT_FILE = os.environ.get("OUTPUT_FILE", os.path.join(BASE, "streams", "id.m3u"))
 CHANNEL_FILE = os.path.join(BASE, "data", "rcti_channels.json")
-MIN_REMAINING = int(os.environ.get("MIN_REMAINING_SEC", "900"))
+MIN_REMAINING = int(os.environ.get("MIN_REMAINING_SEC", "1800"))
 FORCE = os.environ.get("FORCE_REFRESH") == "1"
 APPIER_BASE = os.environ.get("APPIER_ID_BASE", "23984824")
 
@@ -277,6 +277,16 @@ def merge_playlist(channels: list, old_entries: list, fresh: dict) -> list:
     return result
 
 
+def lost_names(old_entries: list, result: list) -> list:
+    """Nama entri lama yang tidak lagi ada di hasil.
+
+    Pengaman terakhir: daftar ini HARUS kosong. Kalau tidak, berarti ada channel
+    (mis. SCTV/Indosiar/manual) yang akan hilang dan penulisan harus dibatalkan.
+    """
+    new_names = {norm(e.name) for e in result}
+    return [e.name for e in old_entries if norm(e.name) not in new_names]
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
                         datefmt="%H:%M:%S")
@@ -338,6 +348,18 @@ def main() -> int:
     if not result:
         log.error("Tidak ada entri untuk ditulis. File TIDAK diubah.")
         return 1
+
+    # Lapisan pengaman terakhir: setiap NAMA entri lama (khususnya channel manual)
+    # harus tetap ada di hasil. Hanya channel terkelola yang boleh "diganti", dan
+    # namanya tetap sama. Bila ada nama yang hilang, batalkan penulisan.
+    lost = lost_names(old_entries, result)
+    if lost:
+        for m in lost:
+            log.error("DIBATALKAN: channel lama akan hilang -> %s", m)
+        log.error("Penulisan DIBATALKAN demi keamanan: %d channel lama tidak boleh hilang.",
+                  len(lost))
+        return 1
+
     m3ulib.write_file(OUTPUT_FILE, result, "#EXTM3U")
     log.info("Selesai: %d/%d terkelola diperbarui; total %d entri -> %s",
              ok, len(channels), len(result), OUTPUT_FILE)
