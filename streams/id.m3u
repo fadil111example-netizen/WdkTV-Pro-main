@@ -2,15 +2,15 @@
 #EXTINF:-1 tvg-id="RCTI" tvg-name="RCTI" group-title="TV Nasional" tvg-logo="https://static.rctiplus.id/media/300/files/fta_rcti/Channel_Logo/RCTI.png", RCTI
 #EXTVLCOPT:http-referrer=https://m.rctiplus.com/
 #EXTVLCOPT:http-user-agent=Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36
-https://poclive.rctiplus.id/rcti-sdi.m3u8?hdnts=exp=1795823309~hmac=ee8229e39ac98883783aa059108241201c6e8e805460236ce3e8e2d278870d8d
+https://poclive.rctiplus.id/rcti-sdi.m3u8?hdnts=exp=1795857145~hmac=ea46158cd0da37b5cb2d33bb723c5702b71be43e8699b397874e4ab6367690d2
 #EXTINF:-1 tvg-id="MNCTV" tvg-name="MNCTV" group-title="TV Nasional" tvg-logo="https://static.rctiplus.id/media/300/files/fta_rcti/Channel_Logo/MNCTV.png", MNCTV
 #EXTVLCOPT:http-referrer=https://m.rctiplus.com/
 #EXTVLCOPT:http-user-agent=Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36
-https://linier-mnctv.rctiplus.id/mnctv-sdi.m3u8?auth_key=1795762109-4ed5d7db37393a0b0ff95a6ea79fad7b-0-e254b237c685f5af337717ad1d0fd9b3
+https://linier-mnctv.rctiplus.id/mnctv-sdi.m3u8?auth_key=1795795945-c88f370d1a146891dbbdaa5ec3473844-0-7ae623eaba85404c81753900b7913ab4
 #EXTINF:-1 tvg-id="iNews" tvg-name="iNews" group-title="TV Nasional" tvg-logo="https://static.rctiplus.id/media/300/files/fta_rcti/Channel_Logo/iNews.png", iNews
 #EXTVLCOPT:http-referrer=https://m.rctiplus.com/
 #EXTVLCOPT:http-user-agent=Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36
-https://linier-inews.rctiplus.id/inews-sdi.m3u8?auth_key=1795762109-55fa278359b9cfafdafecf71bdf5b36b-0-68efa34676e362cf71b7dc5e0de0c6b3
+https://linier-inews.rctiplus.id/inews-sdi.m3u8?auth_key=1795795945-db9fb393fb67260cc86a10f81c58776c-0-d6e690cee0d93f98d6e7868a08a21ee6
 #EXTINF:-1 tvg-logo="https://www.mncvision.id/userfiles/image/channel/sctv.png" group-title="TV Nasional", SCTV HD
 #EXTVLCOPT:http-user-agent=VidioPlayer/6.31.6
 #EXTVLCOPT:http-referrer=http://www.vidio.com/
@@ -42,4 +42,4 @@ https://d84q7nw4qf3j3.cloudfront.net/out/v1/0a6c6b1534444ab4bd903af8761e6747/ind
 #EXTINF:-1 tvg-id="GTV" tvg-name="GTV" group-title="TV Nasional" tvg-logo="https://static.rctiplus.id/media/300/files/fta_rcti/Channel_Logo/GTV.png", GTV
 #EXTVLCOPT:http-referrer=https://m.rctiplus.com/
 #EXTVLCOPT:http-user-agent=Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36
-https://linier-gtv.rctiplus.id/gtv-sdi.m3u8?auth_key=1795762109-de9b8880fb253b43c00ff3f9f560c2f7-0-7d9b0234ce87276d3669cbfdba9fbb02
+https://linier-gtv.rctiplus.id/gtv-sdi.m3u8?auth_key=1795795945-bb0221d8a7654d758ca73a50a007a9e0-0-1be08d858a9fdb7299ece4cd9431e16e
